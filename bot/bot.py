@@ -60,20 +60,5 @@ def category(call: CallbackQuery):
                          reply_markup=questionnaire_inline(category_id))
 
 
-#
-# @bot.callback_query_handler(func=lambda call: "questionnaire|" in call.data)
-# def questionnaire(call: CallbackQuery):
-#     chat_id = call.message.chat.id
-#     from_user_id = call.from_user.id
-#     ques_id = int(call.data.split('|')[1])
-#     questionnaire = questionnaire_list(ques_id)
-#     print(questionnaire)
-#     with bot.retrieve_data(from_user_id, chat_id) as data:
-#         # slug = data['card']['slug']
-#         # data['card']['questionnaire'] = questionnaire_title['title']
-#         # data['card']['chat_id'] = chat_id
-#         print(data)
-
-
 if __name__ == "__main__":
     bot.polling(none_stop=True)
