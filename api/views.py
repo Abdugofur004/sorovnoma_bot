@@ -1,58 +1,75 @@
-from rest_framework.generics import ListCreateAPIView, ListAPIView, RetrieveAPIView, CreateAPIView
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics
 from django.db.models import Q
-from .models import BotUser, Category, Questionnaire, QuestionnaireUser
-from .serializers import BotUserSerializers, CategorySerializers, QuestionnaireSerializers, \
-    QuestionnaireUserSerializers
+from api import models, serializers
+from django.shortcuts import get_object_or_404
 
 
 # userlar ro'yxatdan o'tgan yoki o'tmaganligini tekshirish
-class UserListAPIView(ListAPIView):
-    serializer_class = BotUserSerializers
+class UserListAPIView(generics.RetrieveAPIView):
+    serializer_class = serializers.BotUserSerializer
 
-    def get_queryset(self):
-        queryset = BotUser.objects.filter(chat_id=self.kwargs['chat_id'])
-        return queryset
-
-
-# userlar yaratish uchun
-class UsersCreateAPIView(CreateAPIView):
-    queryset = BotUser.objects.all()
-    serializer_class = BotUserSerializers
-
-
-# bu kategoriyalarni button qilib chiqarish uchun
-class CategoryListAPIView(ListAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializers
-
-
-# bu categoriyaga bo'glangan postlarni olish uchun
-class GetCategoryAPIView(RetrieveAPIView):
-    """
-        BU YERDA CATEGORIYDAGI MALUMOTLARNI GET QILIB bot.py DA dataGA SAQLAYAPMIZ
-    """
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializers
-
-
-class QuestionnaireListAPIView(ListAPIView):
-    """
-        BU YERDA CATEGORIYAGA BOG'LANGAN questionLARNI CHIQARISH
-    """
-    serializer_class = QuestionnaireSerializers
-
-    def get_queryset(self):
-        obj = Questionnaire.objects.filter(category=self.kwargs['pk'])
+    def get_object(self):
+        obj = get_object_or_404(models.BotUser, chat_id=self.kwargs["chat_id"])
         return obj
 
 
-class QuestionFilterAPIView(ListAPIView):
-    queryset = QuestionnaireUser.objects.all()
-    serializer_class = QuestionnaireUserSerializers
+# userlar yaratish uchun
+class UsersCreateAPIView(generics.CreateAPIView):
+    queryset = models.BotUser.objects.all()
+    serializer_class = serializers.BotUserSerializer
 
-    # def get_queryset(self):
-    #     obj = QuestionnaireUser.objects.filter(
-    #         Q(chat_id=self.kwargs['chat_id']) & Q(category=self.kwargs['category'])
-    #     )
-    #     return obj
+
+# bu kategoriyalarni button qilib chiqarish uchun
+class CategoryListAPIView(generics.ListAPIView):
+    queryset = models.Category.objects.all().select_related('state')
+    serializer_class = serializers.CategorySerializer
+
+
+# bu categoriyaga bo'glangan postlarni olish uchun
+class GetCategoryAPIView(generics.RetrieveAPIView):
+    """
+    BU YERDA CATEGORIYDAGI MALUMOTLARNI GET QILIB bot.py DA dataGA SAQLAYAPMIZ
+    """
+
+    queryset = models.Category.objects.all().select_related('state')
+    serializer_class = serializers.CategorySerializer
+
+
+class QuestionnaireListAPIView(generics.ListAPIView):
+    """
+    BU YERDA CATEGORIYAGA BOG'LANGAN questionLARNI CHIQARISH
+    """
+
+    serializer_class = serializers.QuestionnaireSerializer
+
+    def get_queryset(self):
+        obj = models.Questionnaire.objects.filter(category=self.kwargs["pk"])
+        return obj.select_related('category')
+
+
+class QuestionnaireRetrieveAPIView(generics.RetrieveAPIView):
+    serializer_class = serializers.QuestionnaireSerializer
+
+    def get_queryset(self):
+        obj = models.Questionnaire.objects.filter(pk=self.kwargs['pk'])
+        return obj
+
+
+class QuestionFilterAPIView(generics.RetrieveAPIView):
+    serializer_class = serializers.QuestionnaireUserSerializer
+
+    def get_object(self):
+        obj = get_object_or_404(models.QuestionnaireUser, category=self.kwargs['id'],
+                                user__chat_id=self.kwargs['chat_id'])
+
+        return obj
+
+
+class QuestionCreateAPIView(generics.CreateAPIView):
+    queryset = models.QuestionnaireUser.objects.all()
+    serializer_class = serializers.QuestionnaireUserCreateSerializer
+
+
+class ChannelListAPIView(generics.ListAPIView):
+    queryset = models.Channel.objects.all()
+    serializer_class = serializers.ChannelSerializer

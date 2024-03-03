@@ -26,7 +26,7 @@ class State(BaseModel):
 class Category(BaseModel):
     title = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
-    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='state')
+    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="state")
 
     def __str__(self):
         return self.title
@@ -42,9 +42,19 @@ class Questionnaire(BaseModel):
 
 class QuestionnaireUser(BaseModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE, related_name="question")
-    user = models.ForeignKey(BotUser, on_delete=models.CASCADE, related_name='user')
+    questionnaire = models.ForeignKey(
+        Questionnaire, on_delete=models.CASCADE, related_name="question"
+    )
+    user = models.ForeignKey(BotUser, on_delete=models.CASCADE, related_name="user")
     number_votes = models.IntegerField(default=0, editable=False)
 
     def __str__(self):
         return f"{self.questionnaire} {self.number_votes}"
+
+
+class Channel(BaseModel):
+    channel_id = models.CharField(max_length=64, unique=True)
+    channel_url = models.URLField(unique=True)
+
+    def __str__(self):
+        return self.channel_id
